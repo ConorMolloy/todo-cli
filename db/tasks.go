@@ -1,6 +1,7 @@
 package db
 
 import (
+	"encoding/binary"
 	"time"
 
 	"github.com/boltdb/bolt"
@@ -24,4 +25,32 @@ func Init(dbPath string) error {
 		_, err := t.CreateBucketIfNotExists(taskBucket)
 		return err
 	})
+}
+
+func CreateTask(task string) (int, error) {
+	var id int
+	err := db.Update(func(t *bolt.Tx) error {
+		b := t.Bucket(taskBucket)
+		id64, _ := b.NextSequence()
+		key := itob(int(id64))
+		id = int(id64)
+
+		return b.Put(key, []byte(task))
+	})
+	if err != nil {
+		return -1, err
+	}
+
+	return id, nil
+}
+
+// itob returns an 8-byte big endian representation of v.
+func itob(v int) []byte {
+	b := make([]byte, 8)
+	binary.BigEndian.PutUint64(b, uint64(v))
+	return b
+}
+
+func btoi(b []byte) int {
+	return int(binary.BigEndian.Uint64(b))
 }
