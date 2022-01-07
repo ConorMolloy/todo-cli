@@ -65,6 +65,17 @@ func AllTasks() ([]Task, error) {
 	return tasks, nil
 }
 
+func DeleteTask(key int) error {
+	err := db.Update(func(t *bolt.Tx) error {
+		b := t.Bucket(taskBucket)
+		return b.Delete(itob(key))
+	})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // itob returns an 8-byte big endian representation of v.
 func itob(v int) []byte {
 	b := make([]byte, 8)
